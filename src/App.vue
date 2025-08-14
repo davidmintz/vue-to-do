@@ -1,8 +1,10 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { listTasks } from './api/tasks'
 
 const newTask = ref('')
 const tasks = ref([])
+
 
 function addTask() {
   if (!newTask.value.trim()) return
@@ -18,14 +20,14 @@ function removeTask(id) {
   tasks.value = tasks.value.filter(task => task.id !== id)
 }
 
-// Load tasks from localStorage on app start
-onMounted(() => {
-  const stored = localStorage.getItem('tasks')
-  if (stored) {
-    try {
-      tasks.value = JSON.parse(stored)
-    } catch (e) {
-      console.error('Error parsing stored tasks', e)
+onMounted(async () => {
+  try {
+    tasks.value = await listTasks()
+  } catch (e) {
+    console.error('API load failed; falling back to localStorage', e)
+    const stored = localStorage.getItem('tasks')
+    if (stored) {
+      try { tasks.value = JSON.parse(stored) } catch { /* empty */ }
     }
   }
 })
@@ -71,42 +73,4 @@ watch(
   </main>
 </template>
 <style>
-body {
-font-family: sans-serif;
-}
-/* Make every row a flex row */
-.task-item {
-  display: flex;
-  align-items: center;   /* vertical centering */
-  border-bottom: 1px solid #ddd;
-  padding: 0.5rem 0;
-  width: 100%;
-}
-
-/* Push the button to the far right and let text wrap */
-.task-text {
-  flex: 1 1 auto;        /* take remaining space */
-  min-width: 0;          /* allow wrapping/ellipsis behavior */
-  word-break: break-word;/* long words won't shove the button */
-}
-
-/* Button is a fixed-size pill that doesn't shrink */
-.delete-btn {
-  margin-left: 1rem;
-  flex: 0 0 auto;        /* don't grow or shrink */
-  background: #ef4444;
-  color: #fff;
-  border: 0;
-  border-radius: 9999px;
-  width: 1.5rem;
-  height: 1.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color .2s ease;
-}
-
-.delete-btn:hover { background: #dc2626; }
-
 </style>
