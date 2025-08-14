@@ -1,23 +1,28 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import { listTasks } from './api/tasks'
+import { listTasks, createTask, deleteTask } from './api/tasks'
 
 const newTask = ref('')
 const tasks = ref([])
 
 
-function addTask() {
-  if (!newTask.value.trim()) return
-  tasks.value.push({
-    id: Date.now(),
-    text: newTask.value.trim(),
-    done: false
-  })
-  newTask.value = ''
+async function removeTask(id) {
+  if (!window.confirm('Delete this task?')) return
+  try {
+    await deleteTask(id)
+    tasks.value = tasks.value.filter(task => task.id !== id)
+  } catch (err) {
+    console.error('Failed to delete task', err)
+    alert('Could not delete task. Please try again.') // or a fancier toast later
+  }
 }
 
-function removeTask(id) {
-  tasks.value = tasks.value.filter(task => task.id !== id)
+async function addTask() {
+  const text = newTask.value.trim()
+  if (!text) return
+  const created = await createTask({ text, done: false })
+  tasks.value.unshift(created) // or push(), your call
+  newTask.value = ''
 }
 
 onMounted(async () => {
@@ -45,7 +50,7 @@ watch(
 
 <template>
   <main class="p-4 max-w-md mx-auto">
-    <h1 class="text-2xl font-bold mb-4">My To-Do List</h1>
+    <h1 class="text-2xl font-bold mb-4">To Do</h1>
 
     <form @submit.prevent="addTask" class="flex mb-4">
       <input
@@ -73,4 +78,8 @@ watch(
   </main>
 </template>
 <style>
+main {
+  margin: auto;
+  max-width: 600px;
+}
 </style>

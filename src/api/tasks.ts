@@ -45,3 +45,37 @@ export async function listTasks(): Promise<Task[]> {
   const data = await request<any>('/tasks')
   return extractItems<Task>(data)
 }
+
+export type NewTask = { text: string; done?: boolean }
+
+export async function createTask(input: NewTask): Promise<Task> {
+  const payload = {
+    text: input.text,
+    done: input.done ?? false,
+  }
+
+  return request<Task>('/tasks', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/ld+json', // request() already prefers JSON-LD in Accept
+    },
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteTask(task: number | { id: number }): Promise<void> {
+  const id = typeof task === 'number' ? task : task.id
+  const res = await fetch(`${API_BASE}/tasks/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Accept: 'application/ld+json',
+    },
+    credentials: 'include',
+  })
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '')
+    throw new Error(`DELETE /tasks/${id} failed: ${res.status} ${msg}`)
+  }
+  // API Platform typically returns 204 No Content on successful delete.
+}
+
