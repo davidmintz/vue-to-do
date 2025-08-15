@@ -33,7 +33,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     throw new Error(`HTTP ${res.status} - ${detail}`)
   }
 
-  return res.json() as Promise<T>
+  return await res.json() as Promise<T>
 }
 
 function extractItems<T = unknown>(data: any): T[] {
@@ -77,5 +77,47 @@ export async function deleteTask(task: number | { id: number }): Promise<void> {
     throw new Error(`DELETE /tasks/${id} failed: ${res.status} ${msg}`)
   }
   // API Platform typically returns 204 No Content on successful delete.
+}
+
+export async function patchTask(
+  task: number | { id: number },
+  changes: Partial<Pick<Task, 'text' | 'done'>>
+): Promise<Task> {
+  const id = typeof task === 'number' ? task : task.id
+
+  const res = await fetch(`${API_BASE}/tasks/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/merge-patch+json',
+      'Accept': 'application/ld+json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(changes),
+  })
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '')
+    throw new Error(`PATCH /tasks/${id} failed: ${res.status} ${msg}`)
+  }
+
+  // API Platform typically returns the updated resource (200 OK).
+  return await res.json() as Promise<Task>
+}
+
+export async function getTask(id: number): Promise<Task> {
+  const res = await fetch(`${API_BASE}/tasks/${id}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/ld+json',
+    },
+    credentials: 'include',
+  })
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '')
+    throw new Error(`GET /tasks/${id} failed: ${res.status} ${msg}`)
+  }
+
+  return await res.json() as Task
 }
 
