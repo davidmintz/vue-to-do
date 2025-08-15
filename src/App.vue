@@ -77,21 +77,11 @@ onMounted(async () => {
     tasks.value = await listTasks()
   } catch (e) {
     console.error('API load failed; falling back to localStorage', e)
-    const stored = localStorage.getItem('tasks')
-    if (stored) {
-      try { tasks.value = JSON.parse(stored) } catch { /* empty */ }
-    }
+
   }
 })
 
-// Save whenever tasks change
-watch(
-  tasks,
-  (newTasks) => {
-    localStorage.setItem('tasks', JSON.stringify(newTasks))
-  },
-  { deep: true }
-)
+
 </script>
 
 
