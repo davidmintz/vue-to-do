@@ -14,7 +14,11 @@ export default defineConfig(({ mode }) => {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
     },
     server: {
-      host: true, // listen on 0.0.0.0 (LAN/VPN access)
+      host: '10.8.0.2', // was 'true'; listen on 0.0.0.0 (LAN/VPN access)
+      port: 5173,
+      strictPort: true,
+      // If HMR doesn’t connect on mobile, uncomment:
+      hmr: { host: '10.8.0.2', port: 5173 },
       proxy: {
         '/api': {
           target: env.VITE_PROXY_TARGET || 'https://127.0.0.1:8000',
