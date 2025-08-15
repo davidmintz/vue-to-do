@@ -1,6 +1,6 @@
-<script setup>
+<script lang="ts" setup>
 import { ref, watch, onMounted } from 'vue'
-import { listTasks, createTask, deleteTask } from './api/tasks'
+import { listTasks, createTask, deleteTask, patchTask } from './api/tasks'
 
 const newTask = ref('')
 const tasks = ref([])
@@ -23,6 +23,22 @@ async function addTask() {
   const created = await createTask({ text, done: false })
   tasks.value.unshift(created) // or push(), your call
   newTask.value = ''
+}
+
+async function toggleDone(task, event) {
+  const prev = task.done
+  const next = !!event.target.checked
+  task.done = next // optimistic UI
+
+  try {
+    const updated = await patchTask(task.id, { done: next })
+    // Optionally merge server truth (timestamps, etc.)
+    Object.assign(task, updated)
+  } catch (err) {
+    console.error('Failed to toggle done', err)
+    task.done = prev // revert on failure
+    alert('Could not update task. Please try again.')
+  }
 }
 
 onMounted(async () => {
@@ -69,8 +85,7 @@ watch(
 
     <ul>
       <li v-for="task in tasks" :key="task.id" class="task-item">
-        <input type="checkbox" v-model="task.done" style="margin-right: 1em"/><span class="task-text" :style="{ textDecoration : task.done ? 'line-through' : ''}">{{ task.text }}
-          <span v-if="! task.done">(pending)</span>
+        <input type="checkbox" v-model="task.done" @change="toggleDone(task, $event)" style="margin-right: 1em"/><span class="task-text" :style="{ textDecoration : task.done ? 'line-through' : ''}">{{ task.text }}
         </span>
         <button class="delete-btn" @click="removeTask(task.id)">✕</button>
       </li>
