@@ -41,6 +41,37 @@ async function toggleDone(task, event) {
   }
 }
 
+const editingId = ref(null)
+const draftText = ref('')
+
+function startEdit(task) {
+  editingId.value = task.id
+  draftText.value = task.text
+}
+
+function cancelEdit() {
+  editingId.value = null
+  draftText.value = ''
+}
+
+async function saveEdit(task) {
+  const text = draftText.value.trim()
+  if (!text || text === task.text) { cancelEdit(); return }
+  const prev = task.text
+  task.text = text // optimistic
+  try {
+    const updated = await patchTask(task.id, { text })
+    Object.assign(task, updated)
+  } catch (e) {
+    console.error(e)
+    task.text = prev
+    alert('Could not save changes.')
+  } finally {
+    cancelEdit()
+  }
+}
+
+
 onMounted(async () => {
   try {
     tasks.value = await listTasks()
@@ -85,8 +116,29 @@ watch(
 
     <ul>
       <li v-for="task in tasks" :key="task.id" class="task-item">
-        <input type="checkbox" v-model="task.done" @change="toggleDone(task, $event)" style="margin-right: 1em"/><span class="task-text" :style="{ textDecoration : task.done ? 'line-through' : ''}">{{ task.text }}
-        </span>
+        <input type="checkbox" v-model="task.done" @change="toggleDone(task, $event)" style="margin-right: 1em"/>
+
+        <template v-if="editingId === task.id">
+          <input
+            v-model="draftText"
+            class="edit-input"
+            @keydown.enter.prevent="saveEdit(task)"
+            @keydown.esc.prevent="cancelEdit()"
+            @blur="saveEdit(task)"
+            autofocus
+          />
+
+        </template>
+        <template v-else>
+        <span
+          class="task-text"
+          :style="{ textDecoration: task.done ? 'line-through' : '' }"
+          @click="startEdit(task)"
+        >
+    {{ task.text }}
+  </span>
+        </template>
+
         <button class="delete-btn" @click="removeTask(task.id)">✕</button>
       </li>
     </ul>
@@ -97,4 +149,7 @@ main {
   margin: auto;
   max-width: 600px;
 }
+.edit-input { width: 100%; }
+.task-text { cursor: pointer; }
+
 </style>
