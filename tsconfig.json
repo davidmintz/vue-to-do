@@ -5,9 +5,11 @@
     "moduleResolution": "bundler",
     "lib": ["ES2020", "DOM"],
     "jsx": "preserve",
-    "types": ["vite/client", "node"],
+    "types": ["vite/client", "vue/macros-global", "node"],
     "skipLibCheck": true,
-    "strict": false
-  }
+    "strict": false,
+    "paths": { "@/*": ["src/*"] }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
 }
 
