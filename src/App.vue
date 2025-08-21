@@ -6,11 +6,11 @@ const newTask = ref('')
 const tasks = ref([])
 
 
-async function removeTask(id) {
-  if (!window.confirm('Delete this task?')) return
+async function removeTask(task) {
+  if (!window.confirm("Delete this task?\n\n"+task.text)) return
   try {
-    await deleteTask(id)
-    tasks.value = tasks.value.filter(task => task.id !== id)
+    await deleteTask(task.id)
+    tasks.value = tasks.value.filter(t => t.id !== task.id)
   } catch (err) {
     console.error('Failed to delete task', err)
     alert('Could not delete task. Please try again.') // or a fancier toast later
@@ -129,7 +129,7 @@ onMounted(async () => {
   </span>
         </template>
 
-        <button class="delete-btn" @click="removeTask(task.id)">✕</button>
+        <button class="delete-btn" @click="removeTask(task)">✕</button>
       </li>
     </ul>
   </main>
